@@ -105,3 +105,36 @@ print(cor_matrix)
 print("Contingency Table of Group and Gender:")
 print(group_gender_table)
 
+# Load necessary libraries
+library(tidyverse)
+library(car)   # For Levene's Test
+library(psych) # For skewness and kurtosis
+
+# Perform ANOVA
+
+# Perform ANOVA on MMSE by Group
+anova_mmse <- aov(MMSE ~ Group, data = dementia_data)
+summary(anova_mmse)
+
+# Perform ANOVA on CDR by Group
+anova_cdr <- aov(CDR ~ Group, data = dementia_data)
+summary(anova_cdr)
+
+# Check Assumptions for ANOVA
+# 1. Homogeneity of Variances (Levene's Test)
+leveneTest(MMSE ~ Group, data = dementia_data)
+leveneTest(CDR ~ Group, data = dementia_data)
+
+# 2. Normality of Residuals
+shapiro.test(residuals(anova_mmse))
+shapiro.test(residuals(anova_cdr))
+
+# Post-hoc Analysis if ANOVA is significant
+# Tukey's Honest Significant Difference (HSD) test
+tukey_mmse <- TukeyHSD(anova_mmse)
+tukey_cdr <- TukeyHSD(anova_cdr)
+
+# Print results of post-hoc tests
+print(tukey_mmse)
+print(tukey_cdr)
+
