@@ -4,16 +4,15 @@ library(tidyverse)
 # Load dataset
 dementia_data <- read.csv("data/demantia.csv", colClasses = c(
   Group = "factor",        # Demented/Nondemented
-  Visit = "integer",       # Visit number
-  MR_Delay = "integer",    # MR Delay
+  Visit = "factor",       # Visit number
+  MR_Delay = "numeric",    # MR Delay
   Gender = "factor",          # M/F (Gender)
   Hand = "factor",         # Hand (Handedness)
-  Age = "integer",         # Age
-  EDUC = "integer",        # Education
-  SES = "integer",         # Socioeconomic Status
-  MMSE = "integer",        # Mini-Mental State Examination
+  EDUC = "numeric",        # Education
+  SES = "factor",         # Socioeconomic Status
+  MMSE = "numeric",        # Mini-Mental State Examination
   CDR = "numeric",         # Clinical Dementia Rating
-  eTIV = "integer",        # Estimated Total Intracranial Volume
+  eTIV = "numeric",        # Estimated Total Intracranial Volume
   nWBV = "numeric",        # Normalized Whole Brain Volume
   ASF = "numeric"          # Atlas Scaling Factor
 ))
