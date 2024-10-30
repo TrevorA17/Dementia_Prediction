@@ -139,3 +139,12 @@ print(rf_model$results)
 
 cat("\nSupport Vector Machine Model:\n")
 print(svm_model$results)
+
+# Combine the results of the models
+model_list <- resamples(list(KNN = knn_model, RF = rf_model, SVM = svm_model))
+
+# Summarize the results
+summary(model_list)
+
+# Plot the comparison of model performance
+bwplot(model_list, metric = "Accuracy")  # You can change 'Accuracy' to other metrics like 'Kappa' if needed
