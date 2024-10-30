@@ -140,16 +140,15 @@ print(tukey_cdr)
 
 # Load necessary libraries
 library(tidyverse)
-library(ggplot2)
-library(GGally) # For correlation matrix plots
-
+library(GGally)  # For pairwise plots
+library(reshape2) # For melting data for the heatmap
 
 # Univariate Plots
 
-# Histogram for Age
-ggplot(dementia_data, aes(x = Age)) +
-  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
-  labs(title = "Distribution of Age", x = "Age", y = "Frequency") +
+# Histogram for EDUC (Education)
+ggplot(dementia_data, aes(x = EDUC)) +
+  geom_histogram(bins = 15, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Education Level (EDUC)", x = "Education Level", y = "Frequency") +
   theme_minimal()
 
 # Boxplot for MMSE by Group
@@ -167,21 +166,24 @@ ggplot(dementia_data, aes(x = Gender)) +
 
 # Multivariate Plots
 
-# Scatter plot of Age vs. MMSE, colored by Group
-ggplot(dementia_data, aes(x = Age, y = MMSE, color = Group)) +
+# Scatter plot of MMSE vs. eTIV, colored by Group
+ggplot(dementia_data, aes(x = eTIV, y = MMSE, color = Group)) +
   geom_point(alpha = 0.6, size = 3) +
-  labs(title = "Scatter Plot of Age vs. MMSE by Group", x = "Age", y = "MMSE") +
+  labs(title = "Scatter Plot of eTIV vs. MMSE by Group", x = "eTIV (Total Intracranial Volume)", y = "MMSE") +
   theme_minimal() +
   scale_color_manual(values = c("Demented" = "red", "Nondemented" = "blue"))
 
 # Pairwise plot for selected numerical variables
 # Select only numeric columns for the pair plot
-numeric_data <- dementia_data %>% select(Age, EDUC, MMSE, CDR, eTIV, nWBV, ASF)
+numeric_data <- dementia_data %>% select(MR_Delay, EDUC, MMSE, CDR, eTIV, nWBV, ASF)
 ggpairs(numeric_data, aes(color = dementia_data$Group), title = "Pairwise Plot of Numeric Variables by Group")
 
 # Correlation heatmap
+# Calculate correlations only for numeric columns
 cor_data <- cor(numeric_data, use = "complete.obs")
-ggplot(melt(cor_data), aes(Var1, Var2, fill = value)) +
+# Melt correlation data for ggplot
+melted_cor_data <- melt(cor_data)
+ggplot(melted_cor_data, aes(Var1, Var2, fill = value)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
   theme_minimal() +
@@ -194,5 +196,3 @@ ggplot(dementia_data, aes(x = SES, y = MMSE, fill = SES)) +
   labs(title = "MMSE Scores by Socioeconomic Status (SES)", x = "SES", y = "MMSE") +
   theme_minimal() +
   scale_fill_brewer(palette = "Pastel1")
-
-
