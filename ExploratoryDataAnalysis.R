@@ -138,4 +138,61 @@ tukey_cdr <- TukeyHSD(anova_cdr)
 print(tukey_mmse)
 print(tukey_cdr)
 
+# Load necessary libraries
+library(tidyverse)
+library(ggplot2)
+library(GGally) # For correlation matrix plots
+
+
+# Univariate Plots
+
+# Histogram for Age
+ggplot(dementia_data, aes(x = Age)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Age", x = "Age", y = "Frequency") +
+  theme_minimal()
+
+# Boxplot for MMSE by Group
+ggplot(dementia_data, aes(x = Group, y = MMSE, fill = Group)) +
+  geom_boxplot() +
+  labs(title = "MMSE Scores by Group", x = "Group", y = "MMSE") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Demented" = "orange", "Nondemented" = "green"))
+
+# Bar plot for Gender Distribution
+ggplot(dementia_data, aes(x = Gender)) +
+  geom_bar(fill = "coral") +
+  labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+  theme_minimal()
+
+# Multivariate Plots
+
+# Scatter plot of Age vs. MMSE, colored by Group
+ggplot(dementia_data, aes(x = Age, y = MMSE, color = Group)) +
+  geom_point(alpha = 0.6, size = 3) +
+  labs(title = "Scatter Plot of Age vs. MMSE by Group", x = "Age", y = "MMSE") +
+  theme_minimal() +
+  scale_color_manual(values = c("Demented" = "red", "Nondemented" = "blue"))
+
+# Pairwise plot for selected numerical variables
+# Select only numeric columns for the pair plot
+numeric_data <- dementia_data %>% select(Age, EDUC, MMSE, CDR, eTIV, nWBV, ASF)
+ggpairs(numeric_data, aes(color = dementia_data$Group), title = "Pairwise Plot of Numeric Variables by Group")
+
+# Correlation heatmap
+cor_data <- cor(numeric_data, use = "complete.obs")
+ggplot(melt(cor_data), aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap", x = "Variable", y = "Variable") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Box plot for MMSE across SES levels
+ggplot(dementia_data, aes(x = SES, y = MMSE, fill = SES)) +
+  geom_boxplot() +
+  labs(title = "MMSE Scores by Socioeconomic Status (SES)", x = "SES", y = "MMSE") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Pastel1")
+
 
