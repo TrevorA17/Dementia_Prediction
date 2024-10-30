@@ -82,3 +82,60 @@ print(model_cv)
 
 # Display summary of cross-validation metrics
 print(model_cv$results)
+
+# Load necessary libraries
+library(dplyr)
+library(caret)
+library(MLmetrics)
+
+# Remove the 'Hand' column from the dataset
+dementia_data_clean <- dementia_data_clean %>% select(-Hand)
+
+# Check the structure of the cleaned dataset
+str(dementia_data_clean)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define cross-validation settings
+train_control <- trainControl(
+  method = "cv", 
+  number = 10, 
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary
+)
+
+# K-Nearest Neighbors Model
+knn_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "knn", 
+  trControl = train_control,
+  tuneLength = 10  # Search for the optimal value of k
+)
+
+# Random Forest Model
+rf_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "rf", 
+  trControl = train_control
+)
+
+# Support Vector Machine Model
+svm_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "svmRadial", 
+  trControl = train_control
+)
+
+# Display results of each model
+cat("K-Nearest Neighbors Model:\n")
+print(knn_model$results)
+
+cat("\nRandom Forest Model:\n")
+print(rf_model$results)
+
+cat("\nSupport Vector Machine Model:\n")
+print(svm_model$results)
