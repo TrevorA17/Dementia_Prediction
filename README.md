@@ -1,2 +1,2 @@
 # Dementia_Prediction
-Classification &amp; Prediction of Dementia
+This project provides a predictive model for dementia classification based on key patient data. Using machine learning algorithms (K-Nearest Neighbors, Random Forest, and Support Vector Machine), the model predicts whether a patient is in the "Demented" or "Nondemented" group, based on features such as MRI delay, gender, education level, MMSE score, and brain volume measurements. The model was developed and evaluated using R with `caret` for cross-validation and performance tuning. Additionally, a REST API was created using `plumber`, enabling easy access to the model for real-time predictions.
