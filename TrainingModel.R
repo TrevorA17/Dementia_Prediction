@@ -38,3 +38,47 @@ print(bootstrap_results)
 
 # Plot bootstrap results to visualize the distribution of the mean MMSE
 plot(bootstrap_results)
+
+# Load necessary libraries
+library(dplyr)
+library(caret)
+
+# Install the MLmetrics package if not already installed
+if (!requireNamespace("MLmetrics", quietly = TRUE)) {
+  install.packages("MLmetrics")
+}
+
+# Load the MLmetrics library
+library(MLmetrics)
+
+# Remove the 'Hand' column from the dataset
+dementia_data_clean <- dementia_data_clean %>% select(-Hand)
+
+# Check the structure of the cleaned dataset
+str(dementia_data_clean)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define cross-validation settings with stratified sampling
+train_control <- trainControl(
+  method = "cv", 
+  number = 10, 
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary
+)
+
+# Fit the logistic regression model
+model_cv <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "glm", 
+  family = "binomial", 
+  trControl = train_control
+)
+
+# Display cross-validation results
+print(model_cv)
+
+# Display summary of cross-validation metrics
+print(model_cv$results)
