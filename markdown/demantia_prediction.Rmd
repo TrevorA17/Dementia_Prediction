@@ -1,0 +1,487 @@
+---
+title: "Demantia Prediction"
+author: "Trevor Okinda"
+date: "2024"
+output:
+  github_document: 
+    toc: yes
+    toc_depth: 4
+    fig_width: 6
+    fig_height: 4
+    df_print: default
+editor_options:
+  chunk_output_type: console
+---
+
+# Student Details
+
+|                                              |     |
+|----------------------------------------------|-----|
+| **Student ID Number**                        | 134780 |
+| **Student Name**                             | Trevor Okinda |
+| **BBIT 4.2 Group**                           | C |
+| **Project Name**                             | A Rainfall prediction model |
+
+# Setup Chunk
+
+**Note:** the following KnitR options have been set as the global defaults: <BR> `knitr::opts_chunk$set(echo = TRUE, warning = FALSE, eval = TRUE, collapse = FALSE, tidy = TRUE)`.
+
+More KnitR options are documented here <https://bookdown.org/yihui/rmarkdown-cookbook/chunk-options.html> and here <https://yihui.org/knitr/options/>.
+
+```{r setup, include=FALSE}
+library(formatR)
+knitr::opts_chunk$set(
+  warning = FALSE,
+  collapse = FALSE
+)
+```
+
+### Source: 
+
+The dataset that was used can be downloaded here: *\<https://www.kaggle.com/datasets/shashwatwork/dementia-prediction-dataset\>*
+
+### Reference:
+
+*\<Tiwari, S. (2019). Dementia Prediction Dataset [Dataset]. Kaggle. https://www.kaggle.com/datasets/shashwatwork/dementia-prediction-dataset\>\
+Refer to the APA 7th edition manual for rules on how to cite datasets: <https://apastyle.apa.org/style-grammar-guidelines/references/examples/data-set-references>*
+
+# Exploratory Data Analysis
+## Load dataset
+```{r Load dataset}
+# Load necessary libraries
+library(tidyverse)
+
+# Load dataset
+dementia_data <- read.csv("demantia.csv", colClasses = c(
+  Group = "factor",        # Demented/Nondemented
+  Visit = "factor",       # Visit number
+  MR_Delay = "numeric",    # MR Delay
+  Gender = "factor",          # M/F (Gender)
+  Hand = "factor",         # Hand (Handedness)
+  EDUC = "numeric",        # Education
+  SES = "factor",         # Socioeconomic Status
+  MMSE = "numeric",        # Mini-Mental State Examination
+  CDR = "numeric",         # Clinical Dementia Rating
+  eTIV = "numeric",        # Estimated Total Intracranial Volume
+  nWBV = "numeric",        # Normalized Whole Brain Volume
+  ASF = "numeric"          # Atlas Scaling Factor
+))
+
+
+# Display the structure of the dataset
+str(dementia_data)
+
+# View the first few rows of the dataset
+head(dementia_data)
+
+# View the dataset in a separate viewer window
+View(dementia_data)
+```
+
+## Measures of Frequency
+```{r MOF}
+# Measures of Frequency
+# Frequency of categorical variables
+group_freq <- table(dementia_data$Group)
+visit_freq <- table(dementia_data$Visit)
+gender_freq <- table(dementia_data$Gender)
+hand_freq <- table(dementia_data$Hand)
+ses_freq <- table(dementia_data$SES)
+```
+
+## Measures of Central Tendency
+```{r MOCT}
+# Measures of Central Tendency
+# Mean, Median for numerical variables
+mean_age <- mean(dementia_data$Age, na.rm = TRUE)
+median_age <- median(dementia_data$Age, na.rm = TRUE)
+mean_mmse <- mean(dementia_data$MMSE, na.rm = TRUE)
+median_mmse <- median(dementia_data$MMSE, na.rm = TRUE)
+
+# Mode function
+get_mode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+mode_education <- get_mode(dementia_data$EDUC)
+```
+
+## Measures of Relationship
+```{r MOR}
+# Measures of Relationship
+# Correlation matrix for numerical variables
+cor_matrix <- cor(dementia_data %>% select(EDUC, MMSE, CDR, eTIV, nWBV, ASF), use = "complete.obs")
+
+# Contingency table for categorical variables
+group_gender_table <- table(dementia_data$Group, dementia_data$Gender)
+```
+
+## Print Results
+```{r Print}
+# Print results
+print("Frequency of Group:")
+print(group_freq)
+print("Frequency of Visit:")
+print(visit_freq)
+print("Frequency of Gender:")
+print(gender_freq)
+print("Frequency of Handedness:")
+print(hand_freq)
+print("Frequency of SES:")
+print(ses_freq)
+
+print(paste("Mean Age:", mean_age))
+print(paste("Median Age:", median_age))
+print(paste("Mode Education:", mode_education))
+
+
+print(paste("Mean MMSE:", mean_mmse))
+print(paste("Median MMSE:", median_mmse))
+
+
+print("Correlation Matrix:")
+print(cor_matrix)
+
+print("Contingency Table of Group and Gender:")
+print(group_gender_table)
+```
+
+## ANOVA
+```{r ANOVA}
+# Load necessary libraries
+library(tidyverse)
+library(car)   # For Levene's Test
+library(psych) # For skewness and kurtosis
+
+# Perform ANOVA
+
+# Perform ANOVA on MMSE by Group
+anova_mmse <- aov(MMSE ~ Group, data = dementia_data)
+summary(anova_mmse)
+
+# Perform ANOVA on CDR by Group
+anova_cdr <- aov(CDR ~ Group, data = dementia_data)
+summary(anova_cdr)
+
+# Check Assumptions for ANOVA
+# 1. Homogeneity of Variances (Levene's Test)
+leveneTest(MMSE ~ Group, data = dementia_data)
+leveneTest(CDR ~ Group, data = dementia_data)
+
+# 2. Normality of Residuals
+shapiro.test(residuals(anova_mmse))
+shapiro.test(residuals(anova_cdr))
+
+# Post-hoc Analysis if ANOVA is significant
+# Tukey's Honest Significant Difference (HSD) test
+tukey_mmse <- TukeyHSD(anova_mmse)
+tukey_cdr <- TukeyHSD(anova_cdr)
+
+# Print results of post-hoc tests
+print(tukey_mmse)
+print(tukey_cdr)
+```
+
+## Plots
+```{r Plots}
+# Load necessary libraries
+library(tidyverse)
+library(GGally)  # For pairwise plots
+library(reshape2) # For melting data for the heatmap
+
+# Univariate Plots
+
+# Histogram for EDUC (Education)
+ggplot(dementia_data, aes(x = EDUC)) +
+  geom_histogram(bins = 15, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Education Level (EDUC)", x = "Education Level", y = "Frequency") +
+  theme_minimal()
+
+# Boxplot for MMSE by Group
+ggplot(dementia_data, aes(x = Group, y = MMSE, fill = Group)) +
+  geom_boxplot() +
+  labs(title = "MMSE Scores by Group", x = "Group", y = "MMSE") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Demented" = "orange", "Nondemented" = "green"))
+
+# Bar plot for Gender Distribution
+ggplot(dementia_data, aes(x = Gender)) +
+  geom_bar(fill = "coral") +
+  labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+  theme_minimal()
+
+# Multivariate Plots
+
+# Scatter plot of MMSE vs. eTIV, colored by Group
+ggplot(dementia_data, aes(x = eTIV, y = MMSE, color = Group)) +
+  geom_point(alpha = 0.6, size = 3) +
+  labs(title = "Scatter Plot of eTIV vs. MMSE by Group", x = "eTIV (Total Intracranial Volume)", y = "MMSE") +
+  theme_minimal() +
+  scale_color_manual(values = c("Demented" = "red", "Nondemented" = "blue"))
+
+# Pairwise plot for selected numerical variables
+# Select only numeric columns for the pair plot
+numeric_data <- dementia_data %>% select(MR_Delay, EDUC, MMSE, CDR, eTIV, nWBV, ASF)
+ggpairs(numeric_data, aes(color = dementia_data$Group), title = "Pairwise Plot of Numeric Variables by Group")
+
+# Correlation heatmap
+# Calculate correlations only for numeric columns
+cor_data <- cor(numeric_data, use = "complete.obs")
+# Melt correlation data for ggplot
+melted_cor_data <- melt(cor_data)
+ggplot(melted_cor_data, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap", x = "Variable", y = "Variable") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Box plot for MMSE across SES levels
+ggplot(dementia_data, aes(x = SES, y = MMSE, fill = SES)) +
+  geom_boxplot() +
+  labs(title = "MMSE Scores by Socioeconomic Status (SES)", x = "SES", y = "MMSE") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Pastel1")
+
+```
+
+# Preprocessing and Data Transformation
+## Missing Values
+```{r Missing Values}
+# Load necessary library
+library(tidyverse)
+
+# Check for missing values in the dataset
+# Summarize the number of missing values per column
+missing_values_summary <- sapply(dementia_data, function(x) sum(is.na(x)))
+print("Missing values per column:")
+print(missing_values_summary)
+
+# Display a summary of missing values across the dataset
+total_missing_values <- sum(is.na(dementia_data))
+cat("Total missing values in the dataset:", total_missing_values, "\n")
+```
+
+## Remove missing Values
+```{r Remove Missing Values}
+# Visualize missing values using a heatmap
+library(ggplot2)
+library(naniar) # For visualizing missing data
+
+# Plot missing data pattern
+gg_miss_var(dementia_data) +
+  labs(title = "Missing Data Pattern", x = "Variables", y = "Missing Count")
+
+# Show rows with missing values
+missing_rows <- dementia_data[rowSums(is.na(dementia_data)) > 0, ]
+print("Rows with missing values:")
+print(missing_rows)
+
+# Remove rows with missing values
+dementia_data_clean <- na.omit(dementia_data)
+
+# Confirm that there are no missing values in the cleaned dataset
+sum(is.na(dementia_data_clean))  # Should return 0 if all missing values are removed
+
+# Display the cleaned dataset
+head(dementia_data_clean)
+
+# Check the dimensions of the original vs cleaned dataset
+cat("Original dataset dimensions:", dim(dementia_data), "\n")
+cat("Cleaned dataset dimensions:", dim(dementia_data_clean), "\n")
+
+```
+
+# Training Model
+## Data Splitting
+```{r Data Splitting}
+# Load necessary library
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Split the data: 70% for training, 30% for testing
+train_index <- createDataPartition(dementia_data_clean$Group, p = 0.7, list = FALSE)
+training_data <- dementia_data_clean[train_index, ]
+testing_data <- dementia_data_clean[-train_index, ]
+
+# Confirm the dimensions of the splits
+cat("Training data dimensions:", dim(training_data), "\n")
+cat("Testing data dimensions:", dim(testing_data), "\n")
+
+# Display the first few rows of each split
+head(training_data)
+head(testing_data)
+```
+
+## Bootstrapping
+```{r Bootstrapping}
+# Load necessary library
+library(boot)
+
+# Define a function to calculate the statistic (e.g., mean MMSE)
+mean_mmse <- function(data, indices) {
+  sample_data <- data[indices, ]  # Resample data with the given indices
+  return(mean(sample_data$MMSE, na.rm = TRUE))  # Return the mean of MMSE
+}
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Perform bootstrapping
+# Using 1000 resamples to estimate the mean of MMSE
+bootstrap_results <- boot(data = dementia_data_clean, statistic = mean_mmse, R = 1000)
+
+# Display results
+print(bootstrap_results)
+
+# Plot bootstrap results to visualize the distribution of the mean MMSE
+plot(bootstrap_results)
+```
+
+## Cross-validation
+```{r Cross-validation}
+# Load necessary libraries
+library(dplyr)
+library(caret)
+library(MLmetrics)
+library(nnet)  # for multinom
+
+# Drop 'Hand' column
+dementia_data_clean <- dementia_data_clean %>% select(-Hand)
+
+# Ensure 'Group' is a factor
+dementia_data_clean$Group <- as.factor(dementia_data_clean$Group)
+
+# Check levels (expecting 3)
+levels(dementia_data_clean$Group)
+
+# Set seed
+set.seed(123)
+
+# Define cross-validation settings
+train_control <- trainControl(
+  method = "cv",
+  number = 10,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+# Fit a multinomial logistic regression model
+model_cv <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "multinom", 
+  trControl = train_control,
+  trace = FALSE  # suppress output
+)
+
+# Display results
+print(model_cv)
+print(model_cv$results)
+```
+
+## Training Different Models
+```{r Different Models}
+# Load necessary libraries
+library(dplyr)
+library(caret)
+library(MLmetrics)
+
+# Remove the 'Hand' column from the dataset
+if ("Hand" %in% colnames(dementia_data_clean)) {
+  dementia_data_clean <- dementia_data_clean %>% select(-Hand)
+}
+
+
+# Check the structure of the cleaned dataset
+str(dementia_data_clean)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define cross-validation settings
+train_control <- trainControl(
+  method = "cv", 
+  number = 10, 
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary
+)
+
+# K-Nearest Neighbors Model
+knn_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "knn", 
+  trControl = train_control,
+  tuneLength = 10  # Search for the optimal value of k
+)
+
+# Random Forest Model
+rf_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "rf", 
+  trControl = train_control
+)
+
+# Support Vector Machine Model
+svm_model <- train(
+  Group ~ ., 
+  data = dementia_data_clean, 
+  method = "svmRadial", 
+  trControl = train_control
+)
+
+# Display results of each model
+cat("K-Nearest Neighbors Model:\n")
+print(knn_model$results)
+
+cat("\nRandom Forest Model:\n")
+print(rf_model$results)
+
+cat("\nSupport Vector Machine Model:\n")
+print(svm_model$results)
+```
+
+## Performance Comparison
+```{r Performance Comparison}
+# Combine the results of the models
+model_list <- resamples(list(KNN = knn_model, RF = rf_model, SVM = svm_model))
+
+# Summarize the results
+summary(model_list)
+
+# Plot the comparison of model performance
+bwplot(model_list, metric = "Accuracy")  # You can change 'Accuracy' to other metrics like 'Kappa' if needed
+```
+
+## Saving Model
+```{r Saving Model}
+# Load the saved model
+loaded_rf_model <- readRDS("./models/saved_rf_model.rds")
+
+# Example new data for prediction (replace values with actual test data as needed)
+new_data <- data.frame(
+  Visit = factor(1),
+  MR_Delay = 0,
+  Gender = factor("M"),
+  EDUC = 16,
+  SES = factor(2),
+  MMSE = 28,
+  CDR = 0.5,
+  eTIV = 1500,
+  nWBV = 0.7,
+  ASF = 1.05
+)
+
+# Use the loaded model to make predictions
+predictions_loaded_model <- predict(loaded_rf_model, newdata = new_data)
+
+# Print predictions
+print(predictions_loaded_model)
+
+```
+
